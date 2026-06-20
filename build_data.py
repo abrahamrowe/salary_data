@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-Build script: reads salary_data.xlsx and Horizon Salary Benchmarking.xlsx,
-cleans/normalizes the data, and writes salary-benchmarks/data.js
-(a JS file that sets window.SALARY_DATA so the site works on file:// and GitHub Pages
-without any fetch/CORS issues).
+Build script: reads salary_data.xlsx, cleans/normalizes the data, and writes
+salary-benchmarks/data.js (a JS file that sets window.SALARY_DATA so the site
+works on file:// and GitHub Pages without any fetch/CORS issues).
 
 Run:  python3 build_data.py
 """
@@ -15,11 +14,16 @@ import openpyxl
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_XLSX = os.path.join(HERE, "salary_data.xlsx")
-RATES_XLSX = os.path.join(HERE, "Horizon Salary Benchmarking.xlsx")
 OUT = os.path.join(HERE, "salary-benchmarks", "data.js")
 
-# ----- date the data was built (passed in / hardcoded; no Date.now in static site) -----
-GENERATED = "2026-06-20"
+# ----- Exchange rates: mid-market, units of currency per 1 USD -----
+# Update these and RATE_DATE whenever you refresh the rates, then rerun this script.
+RATE_DATE = "2026-06-20"
+UNITS_PER_USD = {
+    "USD": 1.0,
+    "GBP": 0.7557,  # mid-market USD->GBP (Wise/Xe/TradingEconomics consensus, 2026-06-20)
+    "EUR": 0.8718,  # mid-market USD->EUR (Wise/Xe/TradingEconomics consensus, 2026-06-20)
+}
 
 # Column order in the "All data" sheet (0-indexed within the row tuple)
 # 0 Job Title | 1 Organization | 2 Date Published | 3 Job Link | 4 Cause Area
@@ -80,23 +84,8 @@ def location_tags(city, country):
     return tags
 
 
-def load_rates():
-    wb = openpyxl.load_workbook(RATES_XLSX, data_only=True)
-    ws = wb["Exchange Rates"]
-    rows = list(ws.iter_rows(values_only=True))
-    # header: ('currency','Cur/USD','cur/GBP',...) -> col1 = units of <currency> per 1 USD
-    units_per_usd = {}
-    for r in rows[1:]:
-        if r and r[0] in ("USD", "GBP", "EUR"):
-            units_per_usd[r[0]] = float(r[1])
-    wb.close()
-    # usd_per_unit[c] = value of 1 unit of currency c expressed in USD
-    usd_per_unit = {c: 1.0 / v for c, v in units_per_usd.items()}
-    return units_per_usd, usd_per_unit
-
-
 def main():
-    units_per_usd, usd_per_unit = load_rates()
+    usd_per_unit = {c: 1.0 / v for c, v in UNITS_PER_USD.items()}
 
     wb = openpyxl.load_workbook(DATA_XLSX, data_only=True)
     ws = wb["All data"]
@@ -107,9 +96,12 @@ def main():
     skill_counter = Counter()
     cause_counter = Counter()
     dropped = 0
+    date_min = None
+    date_max = None
 
     for r in raw:
         cause = r[4]
+        date_pub = r[2]
         exp = r[5]
         skill = r[6]
         city = r[7]
@@ -119,19 +111,26 @@ def main():
         cur = r[11]
 
         # Must have a usable salary range, currency, experience and cause area
-        if low is None or high is None or cur not in usd_per_unit or not exp or not cause:
+        if low is None or high is None or cur not in UNITS_PER_USD or not exp or not cause:
             dropped += 1
             continue
 
         low = float(low)
         high = float(high)
-        if low > high:  # fix the 12 swapped rows
+        if low > high:  # fix the handful of swapped rows
             low, high = high, low
 
         buckets = seniority_buckets(exp)
         if not buckets:
             dropped += 1
             continue
+
+        # track date range over the jobs we actually keep
+        if date_pub is not None and hasattr(date_pub, "year"):
+            if date_min is None or date_pub < date_min:
+                date_min = date_pub
+            if date_max is None or date_pub > date_max:
+                date_max = date_pub
 
         skills = sorted({canon_skill(t) for t in str(skill).split(",") if t.strip()}) if skill else []
         for s in skills:
@@ -152,12 +151,17 @@ def main():
     causes = sorted(cause_counter, key=lambda x: (x == "Other", -cause_counter[x], x))
     skills = sorted(skill_counter)
 
+    def label(d):
+        return d.strftime("%b %Y") if d else ""
+
     meta = {
-        "generated": GENERATED,
         "totalJobs": len(records),
-        "dropped": dropped,
-        "unitsPerUsd": units_per_usd,   # how many units of currency per 1 USD (from Horizon sheet)
+        "rateDate": RATE_DATE,
+        "unitsPerUsd": {k: round(v, 4) for k, v in UNITS_PER_USD.items()},
         "usdPerUnit": {k: round(v, 6) for k, v in usd_per_unit.items()},
+        "dateMin": date_min.strftime("%Y-%m-%d") if date_min else None,
+        "dateMax": date_max.strftime("%Y-%m-%d") if date_max else None,
+        "dateRangeLabel": (label(date_min) + " – " + label(date_max)) if date_min else "",
         "causeAreas": causes,
         "skills": skills,
         "locations": LOCATIONS,
@@ -174,9 +178,9 @@ def main():
 
     print(f"Wrote {OUT}")
     print(f"  records: {len(records)}  dropped: {dropped}")
+    print(f"  date range: {meta['dateRangeLabel']}  ({meta['dateMin']} .. {meta['dateMax']})")
     print(f"  cause areas: {len(causes)}  skills: {len(skills)}")
-    print(f"  rates (units per USD): {units_per_usd}")
-    print(f"  cause counts: {dict(cause_counter)}")
+    print(f"  rates (units per USD) as of {RATE_DATE}: {UNITS_PER_USD}")
 
 
 if __name__ == "__main__":

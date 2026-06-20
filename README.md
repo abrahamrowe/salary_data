@@ -1,9 +1,9 @@
-# Horizon Salary Benchmarks
+# High Impact Jobs Salary Benchmarks
 
-A static web app that shows salary percentiles (junior / mid / senior) from the
-Horizon salary dataset, with filters for cause area, skill set, and location, and
-a currency toggle (USD / GBP / EUR). No backend — it runs entirely in the browser
-and is hosted on GitHub Pages.
+A static web app that shows salary percentiles (junior / mid / senior) from a
+dataset of high-impact job postings, with filters for cause area, skill set, and
+location, and a currency toggle (USD / GBP / EUR). No backend — it runs entirely
+in the browser and is hosted on GitHub Pages.
 
 **Live site:** _add your GitHub Pages URL here once deployed._
 
@@ -17,12 +17,11 @@ and is hosted on GitHub Pages.
 - A box-and-whisker **chart** of the ranges by seniority.
 - **Filters** (all multi-select): Cause area, Skill set, Location
   (San Francisco Bay Area, Washington DC, London, UK, USA, EU).
-- **Currency** toggle (USD default), converted at fixed rates from the Horizon
-  "Exchange Rates" tab and shown on the page.
+- **Currency** toggle (USD default), converted at mid-market rates shown on the page.
 
 ### How the numbers are calculated
 - Percentiles use each job's **midpoint** (average of advertised low and high),
-  converted to the selected currency — matching the Horizon Analysis tab method.
+  converted to the selected currency.
 - "Typical advertised range" = median of advertised lows → median of advertised highs.
 - A job open to several seniority levels is counted in each, so "All roles" is not
   the sum of the rows.
@@ -42,13 +41,12 @@ build_data.py           ← regenerates salary-benchmarks/data.js from the xlsx
 serve.py                ← local preview server
 .github/workflows/      ← GitHub Pages deploy workflow
 salary_data.xlsx        ← raw source (git-ignored; keep local)
-Horizon Salary Benchmarking.xlsx  ← exchange rates + reference (git-ignored)
 ```
 
 > **Privacy note:** `data.js` is anonymized — it contains salary ranges, cause
 > area, skills, seniority and location tags, but **not** organization names, job
-> titles, or links. The raw `.xlsx` files do contain those, so they are
-> git-ignored by default. Don't commit them to a public repo.
+> titles, or links. The raw `salary_data.xlsx` does contain those, so it is
+> git-ignored by default. Don't commit it to a public repo.
 
 ---
 
@@ -64,16 +62,19 @@ JS, so it works from `file://` too.)
 
 ## Rebuild the data
 
-After editing `salary_data.xlsx` or the exchange rates:
+After editing `salary_data.xlsx`:
 
 ```bash
 pip3 install openpyxl       # one-time
 python3 build_data.py       # rewrites salary-benchmarks/data.js
 ```
 
-To change exchange rates, edit the **Exchange Rates** tab of
-`Horizon Salary Benchmarking.xlsx` (the `Cur/USD` column = units of that currency
-per 1 USD) and rerun `build_data.py`.
+### Updating exchange rates
+
+Rates are mid-market values baked into the site at build time. To refresh them,
+edit `UNITS_PER_USD` and `RATE_DATE` near the top of `build_data.py` (values are
+units of each currency per 1 USD), then rerun `python3 build_data.py`. The date
+you set is shown to users on the page.
 
 ---
 

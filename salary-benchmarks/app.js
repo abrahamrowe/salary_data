@@ -1,4 +1,4 @@
-/* Horizon Salary Benchmarks — static client-side app.
+/* High Impact Jobs Salary Benchmarks — static client-side app.
    Reads window.SALARY_DATA (from data.js). No dependencies, no network. */
 (function () {
   "use strict";
@@ -356,21 +356,17 @@
 
     // meta lines
     document.getElementById("metaLine").innerHTML =
-      "<strong>" + META.totalJobs.toLocaleString("en-US") + "</strong> jobs in the dataset · data as of <strong>" +
-      META.generated + "</strong> · figures shown in your selected currency";
+      "Jobs posted <strong>" + META.dateRangeLabel + "</strong> · <strong>" +
+      META.totalJobs.toLocaleString("en-US") + "</strong> jobs · figures shown in your selected currency";
 
     var u = META.unitsPerUsd;
     document.getElementById("ratesNote").innerHTML =
-      "<strong>Exchange rates</strong> are fixed values from the Horizon sheet: " +
+      "<strong>Exchange rates</strong> are mid-market rates as of " + META.rateDate + ": " +
       "1 USD = " + u.GBP + " GBP = " + u.EUR + " EUR.";
 
-    document.getElementById("dataNote").innerHTML =
-      "Jobs with no advertised salary, currency or experience level were excluded (" +
-      META.dropped + " rows). Sample sizes under " + SMALL_N + " are flagged as small.";
-
     document.getElementById("footerMeta").textContent =
-      "Built from the Horizon Salary Benchmarking dataset · " + META.totalJobs.toLocaleString("en-US") +
-      " jobs · generated " + META.generated;
+      "High Impact Jobs Salary Benchmarks · " + META.totalJobs.toLocaleString("en-US") +
+      " jobs · exchange rates as of " + META.rateDate;
 
     render();
   }
