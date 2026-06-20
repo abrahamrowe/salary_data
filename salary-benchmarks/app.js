@@ -36,7 +36,7 @@
     skill: META.skills,
     loc: META.locations
   };
-  var LABELS = { cause: "Cause area", skill: "Skill set", loc: "Location" };
+  var LABELS = { cause: "Cause area", skill: "Skills", loc: "Location" };
 
   // ---- Currency conversion ----
   // usdPerUnit[c] = value of 1 unit of currency c in USD.
