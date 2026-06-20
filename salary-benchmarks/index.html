@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Horizon Salary Benchmarks</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <h1>Horizon Salary Benchmarks</h1>
+      <p class="sub">
+        Salary percentiles for junior, mid, and senior roles, filtered by cause area,
+        skill set, and location.
+      </p>
+      <p class="meta-line" id="metaLine"></p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Filters -->
+    <section class="filters" aria-label="Filters">
+      <div class="filter-row">
+        <div class="ms" id="ms-cause" data-key="cause">
+          <button class="ms-btn" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="ms-label">Cause area</span>
+            <span class="ms-count">All</span>
+            <span class="ms-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ms-panel" role="group"></div>
+        </div>
+
+        <div class="ms" id="ms-skill" data-key="skill">
+          <button class="ms-btn" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="ms-label">Skill set</span>
+            <span class="ms-count">All</span>
+            <span class="ms-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ms-panel" role="group"></div>
+        </div>
+
+        <div class="ms" id="ms-loc" data-key="loc">
+          <button class="ms-btn" type="button" aria-haspopup="true" aria-expanded="false">
+            <span class="ms-label">Location</span>
+            <span class="ms-count">All</span>
+            <span class="ms-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="ms-panel" role="group"></div>
+        </div>
+
+        <div class="cur-group" role="group" aria-label="Display currency">
+          <span class="cur-label">Currency</span>
+          <div class="seg" id="curSeg">
+            <button type="button" data-cur="USD" class="active">USD</button>
+            <button type="button" data-cur="GBP">GBP</button>
+            <button type="button" data-cur="EUR">EUR</button>
+          </div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn" type="button">Reset</button>
+      </div>
+
+      <div class="active-bar">
+        <div class="chips" id="chips"></div>
+        <div class="sample" id="sampleCount"></div>
+      </div>
+    </section>
+
+    <!-- Results table -->
+    <section class="results">
+      <div class="table-scroll">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th class="seniority-col">Seniority</th>
+              <th>Jobs<br><span class="th-sub">sampled</span></th>
+              <th>10th</th>
+              <th>25th</th>
+              <th class="median-col">Median</th>
+              <th>75th</th>
+              <th>90th</th>
+              <th class="range-col">Typical advertised range<br><span class="th-sub">median low – median high</span></th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+      </div>
+      <p class="empty-msg" id="emptyMsg" hidden>No jobs match these filters. Try removing some.</p>
+    </section>
+
+    <!-- Chart -->
+    <section class="chart-section" id="chartSection">
+      <h2>Salary ranges by seniority</h2>
+      <p class="chart-legend">
+        <span class="lg lg-whisker"></span> 10th–90th percentile
+        <span class="lg lg-box"></span> 25th–75th percentile
+        <span class="lg lg-median"></span> median
+      </p>
+      <div id="chart"></div>
+    </section>
+
+    <!-- Methodology -->
+    <section class="notes">
+      <h2>How this is calculated</h2>
+      <ul>
+        <li><strong>Percentiles</strong> are computed across the listed jobs using each job's
+          <strong>midpoint</strong> (the average of its advertised low and high), converted to the
+          selected currency. This follows the methodology of the Horizon Salary Benchmarking sheet.</li>
+        <li><strong>Typical advertised range</strong> shows the median of advertised lows and the
+          median of advertised highs — a representative posted band, since salaries are listed as
+          ranges rather than single figures.</li>
+        <li><strong>Seniority</strong> comes from each job's experience field. Junior = 1–4y,
+          Mid = 5–9y, Senior = 10y+. A role open to several levels is counted in each, so the
+          "All roles" total is not the sum of the rows.</li>
+        <li><strong>Filters</strong> combine with AND across categories and OR within a category
+          (e.g. selecting two skills matches jobs with <em>either</em> skill).</li>
+        <li id="ratesNote"><strong>Exchange rates</strong> are fixed values from the Horizon sheet.</li>
+        <li id="dataNote"></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span id="footerMeta"></span>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

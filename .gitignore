@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Claude Code local config (session-specific)
+.claude/
+
+# Raw source spreadsheets — keep these LOCAL.
+# They contain organization names and job links that are NOT exposed by the
+# web app (data.js is anonymized). Do not commit them to a public repo.
+*.xlsx
