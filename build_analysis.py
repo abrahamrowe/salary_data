@@ -18,7 +18,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_JS = os.path.join(HERE, "salary-benchmarks", "data.js")
 OUT_DIR = os.path.join(HERE, "analysis")
 
-SMALL_N = 5  # in the chart-ready "median" sheets, blank cells thinner than this
 SENIORITY = ["Junior", "Mid", "Senior"]
 
 
@@ -72,7 +71,6 @@ def main():
     ]
 
     os.makedirs(OUT_DIR, exist_ok=True)
-    blanked = []
     full_rows = []
 
     for slug, header, keyfn, cats in dims:
@@ -94,27 +92,12 @@ def main():
         # sort categories by overall median (desc); categories with no jobs last
         rows.sort(key=lambda x: (x[1]["p50"] is None, -(x[1]["p50"] or 0)))
 
-        # 1) chart-ready: median salary by seniority (grouped bar / column)
-        with open(os.path.join(OUT_DIR, f"median_salary_by_{slug}.csv"), "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow([header, "Junior", "Mid", "Senior", "All roles"])
-            for c, s_all, per in rows:
-                cells = []
-                for sen in SENIORITY:
-                    st = per[sen]
-                    if 0 < st["n"] < SMALL_N:
-                        cells.append("")  # too few to chart a meaningful median
-                        blanked.append(f"{header} / {c} / {sen} (n={st['n']})")
-                    else:
-                        cells.append(rnd(st["p50"]))
-                w.writerow([c] + cells + [rnd(s_all["p50"])])
-
-        # 2) chart-ready: salary spread for all roles (range / dot plot)
+        # chart-ready: salary spread for all roles, as a dot plot (25th / Median / 75th)
         with open(os.path.join(OUT_DIR, f"salary_ranges_by_{slug}.csv"), "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow([header, "Jobs", "25th percentile", "Median", "75th percentile"])
+            w.writerow([header, "25th percentile", "Median", "75th percentile"])
             for c, s_all, per in rows:
-                w.writerow([c, s_all["n"], rnd(s_all["p25"]), rnd(s_all["p50"]), rnd(s_all["p75"])])
+                w.writerow([c, rnd(s_all["p25"]), rnd(s_all["p50"]), rnd(s_all["p75"])])
 
         # accumulate the full long-format breakdown
         for c, s_all, per in rows:
@@ -136,9 +119,7 @@ def main():
     print(f"Wrote CSVs to {OUT_DIR}/")
     print(f"  {len(records)} jobs · USD · rates as of {meta['rateDate']} "
           f"(1 USD = {rate['GBP']} GBP = {rate['EUR']} EUR)")
-    print(f"  blanked {len(blanked)} small (<{SMALL_N}) cells in the median sheets:")
-    for b in blanked:
-        print(f"    - {b}")
+    print("  wrote salary_ranges_by_*.csv (25th/Median/75th) + full_breakdown.csv")
 
 
 if __name__ == "__main__":
