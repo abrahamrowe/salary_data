@@ -10,16 +10,12 @@
   <header class="site-header">
     <div class="wrap">
       <h1>High Impact Jobs Salary Benchmarks</h1>
-      <p class="sub">
-        Salary percentiles for junior, mid, and senior roles, filtered by cause area,
-        skill set, and location.
-      </p>
       <p class="meta-line" id="metaLine"></p>
     </div>
   </header>
 
   <main class="wrap">
-    <!-- Filters -->
+    <!-- Filters (apply to both tabs) -->
     <section class="filters" aria-label="Filters">
       <div class="filter-row">
         <div class="ms" id="ms-cause" data-key="cause">
@@ -67,57 +63,88 @@
       </div>
     </section>
 
-    <!-- Results table -->
-    <section class="results">
+    <!-- Tabs -->
+    <nav class="tabs" id="tabs" role="tablist" aria-label="View">
+      <button type="button" class="tab active" data-tab="benchmarks" role="tab" aria-selected="true">Benchmarks</button>
+      <button type="button" class="tab" data-tab="jobs" role="tab" aria-selected="false">
+        Job listings <span class="tab-count" id="jobsTabCount"></span>
+      </button>
+    </nav>
+
+    <!-- Benchmarks tab -->
+    <div class="tab-panel" id="panel-benchmarks" role="tabpanel">
+      <section class="results">
+        <div class="table-scroll">
+          <table id="resultsTable">
+            <thead>
+              <tr>
+                <th class="seniority-col">Seniority</th>
+                <th>Jobs<br><span class="th-sub">sampled</span></th>
+                <th>10th</th>
+                <th>25th</th>
+                <th class="median-col">Median</th>
+                <th>75th</th>
+                <th>90th</th>
+                <th class="range-col">Typical advertised range<br><span class="th-sub">median low – median high</span></th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+        <p class="empty-msg" id="emptyMsg" hidden>No jobs match these filters. Try removing some.</p>
+      </section>
+
+      <section class="chart-section" id="chartSection">
+        <h2>Salary ranges by seniority</h2>
+        <p class="chart-legend">
+          <span class="lg lg-whisker"></span> 10th–90th percentile
+          <span class="lg lg-box"></span> 25th–75th percentile
+          <span class="lg lg-median"></span> median
+        </p>
+        <div id="chart"></div>
+      </section>
+
+      <section class="notes">
+        <h2>How this is calculated</h2>
+        <ul>
+          <li><strong>Percentiles</strong> are computed across the listed jobs using each job's
+            <strong>midpoint</strong> (the average of its advertised low and high), converted to the
+            selected currency.</li>
+          <li><strong>Typical advertised range</strong> shows the median of advertised lows and the
+            median of advertised highs — a representative posted band, since salaries are listed as
+            ranges rather than single figures.</li>
+          <li><strong>Seniority</strong> is taken from each job's experience level: Junior = 1–4y,
+            Mid = 5–9y, Senior = 10y+. A role open to several levels is counted in each, so the
+            "All roles" total is not the sum of the rows.</li>
+          <li><strong>Filters</strong> combine with AND across categories and OR within a category
+            (e.g. selecting two skills matches jobs with <em>either</em> skill).</li>
+          <li id="ratesNote"><strong>Exchange rates</strong> are mid-market rates.</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Job listings tab -->
+    <div class="tab-panel" id="panel-jobs" role="tabpanel" hidden>
+      <p class="jobs-hint" id="jobsHint"></p>
       <div class="table-scroll">
-        <table id="resultsTable">
+        <table id="jobsTable" class="jobs-table">
           <thead>
             <tr>
-              <th class="seniority-col">Seniority</th>
-              <th>Jobs<br><span class="th-sub">sampled</span></th>
-              <th>10th</th>
-              <th>25th</th>
-              <th class="median-col">Median</th>
-              <th>75th</th>
-              <th>90th</th>
-              <th class="range-col">Typical advertised range<br><span class="th-sub">median low – median high</span></th>
+              <th data-sort="t">Title</th>
+              <th data-sort="o">Organization</th>
+              <th data-sort="c">Cause area</th>
+              <th data-sort="sen">Seniority</th>
+              <th>Skills</th>
+              <th data-sort="loc">Location</th>
+              <th data-sort="sal" class="num">Salary range</th>
+              <th data-sort="d" class="num">Posted</th>
             </tr>
           </thead>
-          <tbody id="resultsBody"></tbody>
+          <tbody id="jobsBody"></tbody>
         </table>
       </div>
-      <p class="empty-msg" id="emptyMsg" hidden>No jobs match these filters. Try removing some.</p>
-    </section>
-
-    <!-- Chart -->
-    <section class="chart-section" id="chartSection">
-      <h2>Salary ranges by seniority</h2>
-      <p class="chart-legend">
-        <span class="lg lg-whisker"></span> 10th–90th percentile
-        <span class="lg lg-box"></span> 25th–75th percentile
-        <span class="lg lg-median"></span> median
-      </p>
-      <div id="chart"></div>
-    </section>
-
-    <!-- Methodology -->
-    <section class="notes">
-      <h2>How this is calculated</h2>
-      <ul>
-        <li><strong>Percentiles</strong> are computed across the listed jobs using each job's
-          <strong>midpoint</strong> (the average of its advertised low and high), converted to the
-          selected currency.</li>
-        <li><strong>Typical advertised range</strong> shows the median of advertised lows and the
-          median of advertised highs — a representative posted band, since salaries are listed as
-          ranges rather than single figures.</li>
-        <li><strong>Seniority</strong> is taken from each job's experience level: Junior = 1–4y,
-          Mid = 5–9y, Senior = 10y+. A role open to several levels is counted in each, so the
-          "All roles" total is not the sum of the rows.</li>
-        <li><strong>Filters</strong> combine with AND across categories and OR within a category
-          (e.g. selecting two skills matches jobs with <em>either</em> skill).</li>
-        <li id="ratesNote"><strong>Exchange rates</strong> are mid-market rates.</li>
-      </ul>
-    </section>
+      <p class="empty-msg" id="jobsEmptyMsg" hidden>No jobs match these filters. Try removing some.</p>
+    </div>
   </main>
 
   <footer class="site-footer">

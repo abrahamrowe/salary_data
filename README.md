@@ -43,10 +43,11 @@ serve.py                ← local preview server
 salary_data.xlsx        ← raw source (git-ignored; keep local)
 ```
 
-> **Privacy note:** `data.js` is anonymized — it contains salary ranges, cause
-> area, skills, seniority and location tags, but **not** organization names, job
-> titles, or links. The raw `salary_data.xlsx` does contain those, so it is
-> git-ignored by default. Don't commit it to a public repo.
+> **Note on what's published:** `data.js` includes each job's title,
+> organization, and link to the (public) posting, since the Job listings tab
+> displays them — so all of that becomes public on the deployed site. That's by
+> design. The raw `salary_data.xlsx` is git-ignored to keep a single source of
+> truth in the repo; regenerate `data.js` from it with `build_data.py`.
 
 ---
 

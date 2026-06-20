@@ -137,11 +137,18 @@ def main():
             skill_counter[s] += 1
         cause_counter[cause] += 1
 
+        date_str = date_pub.strftime("%Y-%m-%d") if (date_pub is not None and hasattr(date_pub, "year")) else ""
         records.append({
+            "t": r[0] or "",          # job title
+            "o": r[1] or "",          # organization
+            "k": r[3] or "",          # job link
             "c": cause,
             "s": skills,
             "e": buckets,
             "l": location_tags(city, country),
+            "ci": city or "",         # city and state (display)
+            "co": country or "",      # country (display)
+            "d": date_str,            # date published (ISO)
             "lo": round(low, 2),
             "hi": round(high, 2),
             "cu": cur,

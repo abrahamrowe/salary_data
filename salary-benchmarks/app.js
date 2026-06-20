@@ -20,6 +20,8 @@
     loc: new Set(),
     currency: "USD"
   };
+  var jobSort = { key: "d", dir: -1 }; // jobs tab sort; default = most recent first
+  var lastModel = null;
 
   // Precompute option counts (over all records) for display in dropdowns
   var counts = { cause: {}, skill: {}, loc: {} };
@@ -118,7 +120,7 @@
     });
     var all = statsFor(filtered);
     all.level = "All roles";
-    return { rows: rows, all: all, total: filtered.length };
+    return { rows: rows, all: all, total: filtered.length, filtered: filtered };
   }
 
   // ---- Render: table ----
@@ -225,6 +227,97 @@
     container.innerHTML = svg.join("");
   }
 
+  // ---- Render: job listings table ----
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function formatDate(iso) {
+    var p = (iso || "").split("-");
+    if (p.length !== 3) return iso || "—";
+    return parseInt(p[2], 10) + " " + MONTHS[parseInt(p[1], 10) - 1] + " " + p[0];
+  }
+
+  function jobSortVal(r, key, cur) {
+    switch (key) {
+      case "t": return (r.t || "").toLowerCase();
+      case "o": return (r.o || "").toLowerCase();
+      case "c": return (r.c || "").toLowerCase();
+      case "sen": return Math.min.apply(null, r.e.map(function (x) { return LEVELS.indexOf(x); }));
+      case "loc": return ((r.ci || r.co) || "").toLowerCase();
+      case "sal": return (convert(r.lo, r.cu, cur) + convert(r.hi, r.cu, cur)) / 2;
+      case "d": return r.d || "";
+      default: return "";
+    }
+  }
+
+  function updateSortArrows() {
+    document.querySelectorAll("#jobsTable thead th[data-sort]").forEach(function (th) {
+      var ex = th.querySelector(".sort-arrow");
+      if (ex) ex.remove();
+      if (th.getAttribute("data-sort") === jobSort.key) {
+        var s = document.createElement("span");
+        s.className = "sort-arrow";
+        s.textContent = jobSort.dir > 0 ? "▲" : "▼";
+        th.appendChild(s);
+      }
+    });
+  }
+
+  function renderJobs(model) {
+    var cur = state.currency;
+    var body = document.getElementById("jobsBody");
+    var empty = document.getElementById("jobsEmptyMsg");
+    var table = document.getElementById("jobsTable");
+    var hint = document.getElementById("jobsHint");
+
+    var recs = model.filtered.slice();
+    if (!recs.length) {
+      body.innerHTML = "";
+      empty.hidden = false;
+      table.style.display = "none";
+      hint.textContent = "";
+      updateSortArrows();
+      return;
+    }
+    empty.hidden = true;
+    table.style.display = "";
+
+    var k = jobSort.key, dir = jobSort.dir;
+    recs.sort(function (a, b) {
+      var va = jobSortVal(a, k, cur), vb = jobSortVal(b, k, cur);
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
+      return 0;
+    });
+
+    hint.innerHTML = "Showing <strong>" + recs.length.toLocaleString("en-US") + "</strong> job" +
+      (recs.length === 1 ? "" : "s") + ". Click a column header to sort; click a title to open the posting.";
+
+    body.innerHTML = recs.map(function (r) {
+      var range = fmt(convert(r.lo, r.cu, cur), cur) + " – " + fmt(convert(r.hi, r.cu, cur), cur);
+      var orig = (r.cu !== cur) ? '<span class="sal-orig">from ' + r.cu + "</span>" : "";
+      var safeLink = /^https?:\/\//i.test(r.k) ? r.k : "";
+      var title = safeLink
+        ? '<a class="job-title" href="' + escapeAttr(safeLink) + '" target="_blank" rel="noopener">' + escapeHtml(r.t) + "</a>"
+        : '<span class="job-title nolink">' + escapeHtml(r.t) + "</span>";
+      var loc = escapeHtml((r.ci || "").replace(/,/g, ", "));
+      var locSub = "";
+      if (loc && r.co) locSub = '<span class="job-sub">' + escapeHtml(r.co) + "</span>";
+      else if (!loc && r.co) loc = escapeHtml(r.co);
+      var sen = r.e.map(function (x) { return '<span class="sen-pill">' + x + "</span>"; }).join("");
+      return "<tr>" +
+        "<td>" + title + "</td>" +
+        '<td class="job-org">' + escapeHtml(r.o) + "</td>" +
+        "<td>" + escapeHtml(r.c) + "</td>" +
+        "<td>" + sen + "</td>" +
+        '<td class="job-skills">' + escapeHtml(r.s.join(", ")) + "</td>" +
+        '<td class="job-loc">' + loc + locSub + "</td>" +
+        '<td class="num">' + range + orig + "</td>" +
+        '<td class="num">' + (r.d ? formatDate(r.d) : "—") + "</td>" +
+        "</tr>";
+    }).join("");
+
+    updateSortArrows();
+  }
+
   // ---- Render: active filter chips + sample count ----
   function renderActive(model) {
     var chips = document.getElementById("chips");
@@ -256,9 +349,12 @@
   // ---- Main render ----
   function render() {
     var model = compute();
+    lastModel = model;
     renderTable(model);
     renderChart(model);
+    renderJobs(model);
     renderActive(model);
+    document.getElementById("jobsTabCount").textContent = model.total.toLocaleString("en-US");
   }
 
   // ---- Build multi-select dropdowns ----
@@ -332,6 +428,34 @@
       state[b.getAttribute("data-key")].delete(b.getAttribute("data-val"));
       syncChecks(b.getAttribute("data-key"));
       render();
+    });
+
+    // tab switching
+    document.getElementById("tabs").addEventListener("click", function (e) {
+      var b = e.target.closest(".tab");
+      if (!b) return;
+      var tab = b.getAttribute("data-tab");
+      this.querySelectorAll(".tab").forEach(function (t) {
+        var on = t === b;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      document.getElementById("panel-benchmarks").hidden = tab !== "benchmarks";
+      document.getElementById("panel-jobs").hidden = tab !== "jobs";
+    });
+
+    // job table column sorting
+    document.querySelector("#jobsTable thead").addEventListener("click", function (e) {
+      var th = e.target.closest("th[data-sort]");
+      if (!th) return;
+      var key = th.getAttribute("data-sort");
+      if (jobSort.key === key) {
+        jobSort.dir *= -1;
+      } else {
+        jobSort.key = key;
+        jobSort.dir = (key === "sal" || key === "d") ? -1 : 1; // numeric/date desc, text asc
+      }
+      if (lastModel) renderJobs(lastModel);
     });
 
     // currency segmented control
