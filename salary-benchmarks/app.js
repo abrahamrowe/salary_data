@@ -213,7 +213,7 @@
 
       // box p25..p75
       var bx = x(s.p25), bw = Math.max(2, x(s.p75) - x(s.p25));
-      svg.push('<rect x="' + bx + '" y="' + boxTop + '" width="' + bw + '" height="' + boxH + '" rx="3" fill="var(--box)" opacity="0.85"/>');
+      svg.push('<rect x="' + bx + '" y="' + boxTop + '" width="' + bw + '" height="' + boxH + '" rx="1" fill="var(--box)" opacity="0.85"/>');
       // median line
       svg.push('<line x1="' + x(s.p50) + '" y1="' + (boxTop - 3) + '" x2="' + x(s.p50) + '" y2="' + (boxTop + boxH + 3) + '" stroke="var(--box-strong)" stroke-width="3"/>');
 
